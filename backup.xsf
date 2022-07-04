@@ -1,0 +1,85 @@
+##############################################
+# Script        	: Daily Backup Script 
+# Revision      	: 1.1
+# EXOS Version(s)  	: 12.3.x and Newer
+# Last Updated  	: 27 Jun 2022
+##############################################
+
+enable cli scripting
+
+# For Testing
+delete upm profile daily_backup
+delete upm timer daily_backup_time
+
+# Create UPM profile
+create upm profile daily_backup
+
+disable clipaging
+enable cli scripting
+
+# TFTP Server Info & backupTime
+set var tftp 10.20.10.50
+set var vrtr vr-default
+set var vrtr2 vr-mgmt
+
+# Get Switch SysName
+set var cli.out 0
+show snmp get 1.3.6.1.2.1.1.5.0
+set var snmpnameraw $tcl(split ${cli.out} " ")
+set var snmpsearch $tcl(regexp -nocase {=} $snmpnameraw)
+set var snmpsearch ($snmpsearch + 1)
+set var sysname $tcl(lindex $snmpnameraw $snmpsearch)
+
+# Get Switch Serial
+set var cli.out 0
+show snmp get 1.3.6.1.2.1.47.1.1.1.1.11.1
+set var snmpnameraw $tcl(split ${cli.out} " ")
+set var snmpsearch $tcl(regexp -nocase {=} $snmpnameraw)
+set var snmpsearch ($snmpsearch + 1)
+set var syssn $tcl(lindex $snmpnameraw $snmpsearch)
+
+# Get SystemTime USE TCL
+set var SecSystemTime $TCL(clock seconds)
+set var systemTime $TCL(clock format $SecSystemTime -format {%Y%m%d})
+
+# XSF File name parsing
+set var current E$(syssn)$(systemtime)
+set var current $tcl(join $current "-")
+
+
+# Save configuration as XSF file
+save configuration as-script $current
+Y
+create log message "create xsf configuration file"
+
+
+# Upload XSF to tftp server from VR Default or Mgmt
+tftp put $tftp vr $vrtr $(current).xsf
+#tftp put $tftp vr $vrtr2  $(current).xsf
+create log message "uploaded files to tftp server"
+
+# Delete Variables
+del tftp
+del vrtr
+del vrtr2
+del syssn
+del sysname
+del SecSystemTime
+del systemTime
+del current
+del var "cli.out"
+create log message "Daily Automated Backup Ran"
+
+# End of UPM profile
+.
+
+# Config UPM Setting
+
+configure upm profile daily_backup maximum execution-time 1000
+create upm timer daily_backup_time
+configure upm timer daily_backup_time profile daily_backup
+#configure upm timer daily_backup_time after 1 every 86400
+#Start time:2022 6/27 22:00 and every day at 22:00 do backup
+configure upm timer daily_backup_time at 6 27 2022 23 0 0 every 86400
+enable upm profile daily_backup
+create log message "UPM daily_backup successfully created"
