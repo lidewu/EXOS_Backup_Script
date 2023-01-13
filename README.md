@@ -5,5 +5,4 @@ This is for ExtremeNetwork EXOS Serial Switch to backup configuration to the spe
 ## How To Use
 --------------------
 Modify  Tftp Server IP Address
-# TFTP Server Info & backupTime
 set var tftp <Tftp IP Address>
