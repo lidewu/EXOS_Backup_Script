@@ -20,7 +20,7 @@ enable cli scripting
 # TFTP Server Info & backupTime
 set var tftp 10.20.10.50
 set var vrtr vr-default
-set var vrtr2 vr-mgmt
+
 
 # Get Switch SysName
 set var cli.out 0
@@ -55,7 +55,6 @@ create log message "create xsf configuration file"
 
 # Upload XSF to tftp server from VR Default or Mgmt
 tftp put $tftp vr $vrtr $(current).xsf
-#tftp put $tftp vr $vrtr2  $(current).xsf
 create log message "uploaded files to tftp server"
 
 # Delete Variables
